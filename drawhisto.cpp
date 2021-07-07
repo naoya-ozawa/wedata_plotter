@@ -18,24 +18,25 @@ using namespace std;
 
 int main (int argc, char** argv){
 
-    // Default input file parameters
-    string exp_date = "20210611";
-    string slot_no = "1";
-    string input_no = "1";
-
     // Input file parameters passed by argument
     if (argc != 5){
         cout << "usage: ./drawhisto <date> <time> <slot> <input>" << endl;
-        cout << "enter 'd' to use the default value" << endl;
         exit(1);
     }
-    if (argv[1] != "d") exp_date = argv[1];
+    string exp_date = argv[1];
     string run_time = argv[2];
-    if (argv[3] != "d") slot_no = argv[3];
-    if (argv[4] != "d") input_no = argv[4];
+    string slot_no = argv[3];
+    string input_no = argv[4];
 
     // CSV file to read data from
-    const char* filename = Form("./-%s-%s-Slot%s-In%s.csv",exp_date.c_str(),run_time.c_str(),slot_no.c_str(),input_no.c_str());
+    string filelabel = "-" + exp_date + "-" + run_time + "-Slot" + slot_no + "-In" + input_no;
+    string filelocation = "./../" + filelabel + ".csv";
+    const char* filename = filelocation.c_str();
+
+    // Create output directory (if it does not exist yet)
+    string outdir = "./../analysis/" + filelabel;
+    struct stat statBuf;
+    if (stat(outdir.c_str(),&statBuf) != 0) mkdir(outdir.c_str(),S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH);
 
     // Read live-time of measurement (cell B37)
     double timedur = -9999.;
@@ -102,8 +103,8 @@ int main (int argc, char** argv){
     ehtree->GetXaxis()->SetTitleOffset(0.85);
     ehtree->GetYaxis()->SetTitleSize(0.07);
     ehtree->GetYaxis()->SetTitle(Form("Counts (/%3.0f CH/%3.2f min.)",ehtree->GetXaxis()->GetBinWidth(0),timedur/60.));
-    ehtree->GetYaxis()->SetTitleOffset(0.4);
-
+    ehtree->GetYaxis()->SetTitleOffset(0.45);
+    c_raw->cd(1)->SetLogy();
 
     // Time histogram
     c_raw->cd(2);
@@ -120,7 +121,7 @@ int main (int argc, char** argv){
     thtree->GetXaxis()->SetTitleOffset(0.85);
     thtree->GetYaxis()->SetTitleSize(0.07);
     thtree->GetYaxis()->SetTitle(Form("Counts (/%3.1f s)",thtree->GetXaxis()->GetBinWidth(0)*TMath::Power(10.,-6)));
-    thtree->GetYaxis()->SetTitleOffset(0.35);
+    thtree->GetYaxis()->SetTitleOffset(0.40);
 
 
     // Update canvas and finish

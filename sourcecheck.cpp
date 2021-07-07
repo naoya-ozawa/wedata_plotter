@@ -14,30 +14,26 @@
 #include <TH1F.h>
 #include <TF1.h>
 #include <TLatex.h>
+#include <TLine.h>
 #include <TRint.h>
 using namespace std;
 
 int main (int argc, char** argv){
 
-    // Default input file parameters
-    string exp_date = "20210611";
-    string slot_no = "1";
-    string input_no = "1";
-
-    // Input file parameters passed by argument
-    if (argc != 6){
-        cout << "usage: ./sourcecheck <date> <time> <slot> <input> <energy (keV)>" << endl;
-        cout << "enter 'd' to use the default value" << endl;
+   // Input file parameters passed by argument
+    if (argc != 7){
+        cout << "usage: ./sourcecheck <date> <time> <slot> <input> <channel*CH> <energy (keV)>" << endl;
         exit(1);
     }
-    if (argv[1] != "d") exp_date = argv[1];
+    string exp_date = argv[1];
     string run_time = argv[2];
-    if (argv[3] != "d") slot_no = argv[3];
-    if (argv[4] != "d") input_no = argv[4];
-    double energy = stod(argv[5]);
+    string slot_no = argv[3];
+    string input_no = argv[4];
+    double mean = stod(argv[5]);
+    double energy = stod(argv[6]);
 
     // CSV file to read data from
-    const char* filename = Form("./-%s-%s-Slot%s-In%s.csv",exp_date.c_str(),run_time.c_str(),slot_no.c_str(),input_no.c_str());
+    const char* filename = Form("./../-%s-%s-Slot%s-In%s.csv",exp_date.c_str(),run_time.c_str(),slot_no.c_str(),input_no.c_str());
 
     // Read live-time of measurement (cell B37)
     double timedur = -9999.;
@@ -108,7 +104,7 @@ int main (int argc, char** argv){
 
     TF1 *alphapeak = new TF1("alphapeak","gaus(0)*(1.+TMath::Erf(([3]*((x-[1])/[2]))/TMath::Sqrt(2.)))",0.,4096.); // skew-gaussian
     alphapeak->SetParameter(0,100.); // height
-    alphapeak->SetParameter(1,3000.); // mean
+    alphapeak->SetParameter(1,mean); // mean
     alphapeak->SetParameter(2,10); // sigma
     alphapeak->SetParameter(3,0.0); // peakshape factor
     ehtree->Fit("alphapeak","E");
@@ -119,9 +115,19 @@ int main (int argc, char** argv){
 
     TLatex *l = new TLatex();
     l->SetTextSize(0.05);
-    l->DrawLatex(energy/a,ehtree->GetMaximum(),"Skew-Normal fit (assuming monochr. and no-bias):");
-    l->DrawLatex(energy/a,ehtree->GetMaximum()*0.8,Form("Mean = %3.2f keV (%3.2f#pm%3.2f CH)",energy, energy/a, energy*a_err/(a*a)));
-    l->DrawLatex(energy/a,ehtree->GetMaximum()*0.6,Form("FWHM = %3.2f#pm%3.2f keV",fwhm,fwhm_err));
+    l->DrawLatex(mean,ehtree->GetMaximum(),"Skew-Normal fit (assuming monochr. and no-bias):");
+    l->DrawLatex(mean,ehtree->GetMaximum()*0.8,Form("Mean = %3.2f keV (%3.2f#pm%3.2f CH)",energy, energy/a, energy*a_err/(a*a)));
+    l->DrawLatex(mean,ehtree->GetMaximum()*0.6,Form("FWHM = %3.2f#pm%3.2f keV",fwhm,fwhm_err));
+
+    TLine *lrange = new TLine(alphapeak->GetParameter(1)-alphapeak->GetParameter(2),1,alphapeak->GetParameter(1)-alphapeak->GetParameter(2),ehtree->GetMaximum());
+    lrange->SetLineColor(2);
+    lrange->SetLineStyle(2);
+    lrange->Draw();
+    TLine *urange = new TLine(alphapeak->GetParameter(1)+alphapeak->GetParameter(2),1,alphapeak->GetParameter(1)+alphapeak->GetParameter(2),ehtree->GetMaximum());
+    urange->SetLineColor(2);
+    urange->SetLineStyle(2);
+    urange->Draw();
+ 
 
     // Time histogram
     c_raw->cd(2);

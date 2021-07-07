@@ -3,3 +3,9 @@ drawhisto:	drawhisto.cpp
 
 sourcecheck:	sourcecheck.cpp
 	`root-config --cxx --cflags` -o sourcecheck sourcecheck.cpp `root-config --glibs`
+
+timewindow_comparison:	timewindow_comparison.cpp
+	`root-config --cxx --cflags` -o timewindow_comparison timewindow_comparison.cpp `root-config --glibs`
+
+runcomparison:	runcomparison.cpp
+	`root-config --cxx --cflags` -o runcomparison runcomparison.cpp `root-config --glibs`
